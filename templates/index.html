@@ -1,0 +1,397 @@
+{% load staticfiles %}
+<html>
+<head>
+<link href="{% static 'bootstrap-3.3.5-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/starter-template.css' %}" rel="stylesheet">
+<link href="{% static 'css/bootstrap-datetimepicker.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <!-- nav -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                </button>
+                <a class="navbar-brand" href="#">YARN Application Statistics</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- content -->
+    <div class="container-fluid">
+        <!-- datetime selector -->
+        <form class="form-inline" style="padding-top: 30px;">
+            <div class="form-group">
+                <label>From : </label>
+                <div class='input-group date' id='from-time'>
+                    <input type='text' class="form-control" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>To : </label>
+                <div class='input-group date' id='end-time'>
+                    <input type='text' class="form-control" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+            <button type="button" class="btn btn-default" id="query-btn">Query</button>
+        </form>
+
+        <!-- advanced filter -->
+        <div class="well">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Queue Name</label>
+                        <input type="text" class="form-control" id="queue-name-input" placeholder="root.SYSTEM.<account>">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Application Type</label>
+                        <input type="text" class="form-control" id="app-type-input" placeholder="SPARK">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Application State</label>
+                        <div class="checkbox">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" value="FINISHED" class="app-state-checkbox" checked> FINISHED
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" value="FAILED" class="app-state-checkbox" checked> FAILED
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" value="KILLED" class="app-state-checkbox" checked> KILLED
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- /.row -->
+        </div> <!-- /.well -->
+      
+        <div id="result-div" class="hidden" style="padding-top: 30px;">
+            <!-- title -->
+            <h3>Result  <small>Total applications : <span id="total-apps-text"></span></small></h3>
+
+            <!-- sub function -->
+            <div class="row">
+                <div class="col-md-4 col-lg-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search-input" placeholder="Search for...">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-3 pull-right">
+                    <p class="pull-right" style="font-size: 16px;">Views :
+                        <label class="radio-inline">
+                            <input type="radio" class="table-view-radio" name="viewRadioOptions" value="project" id="project-view-radio" checked> Project
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" class="table-view-radio" name="viewRadioOptions" value="queue" id="queue-view-radio"> Queue
+                        </label>
+                    </p>
+                </div>
+            </div> <!-- /.row -->
+
+            <!-- project view result table -->
+            <table id="project-view-table" class="table table-hover hidden">
+                <thead>
+                    <tr>
+                        <th width="18%">Name</th>
+                        <th width="8%">Project</th>
+                        <th width="15%">Queues</th>
+                        <th width="10%">App state</th>
+                        <th width="10%">Amount of apps</th>
+                        <th width="12%">Memory (MB-seconds)</th>
+                        <th width="12%">Vcores (vcore-seconds)</th>
+                        <th width="15%">Total execution time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="record hidden">
+                        <td class="name"></td>
+                        <td class="project"></td>
+                        <td class="queues"></td>
+                        <td class="app-state"></td>
+                        <td class="app-amount"></td>
+                        <td class="memory"></td>
+                        <td class="vcore"></td>
+                        <td class="execution-time"></td>
+                    </tr>
+                </tbody>
+            </table> <!-- /#project-view-table -->
+
+            <!-- queue view result table -->
+            <table id="queue-view-table" class="table table-hover hidden">
+                <thead>
+                    <tr>
+                        <th width="18%">Queue name</th>
+                        <th width="8%">Project</th>
+                        <th width="15%">App type</th>
+                        <th width="10%">App state</th>
+                        <th width="10%">Amount of apps</th>
+                        <th width="12%">Memory (MB-seconds)</th>
+                        <th width="12%">Vcores (vcore-seconds)</th>
+                        <th width="15%">Total execution time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="record hidden">
+                        <td class="queue-name"></td>
+                        <td class="project"></td>
+                        <td class="app-type"></td>
+                        <td class="app-state"></td>
+                        <td class="app-amount"></td>
+                        <td class="memory"></td>
+                        <td class="vcore"></td>
+                        <td class="execution-time"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div> <!-- /#result-div -->
+
+        <div id="no-result-div" class="hidden" style="padding-top: 30px;">
+            <h3>No Result ...</h3>
+        </div><!-- /#no-result-div  -->
+
+        <!-- loading -->
+        <div class="starter-template">
+            <img id="loader-img" class="hidden" src="{% static 'img/loader.gif' %}">
+        </div>
+      
+    </div><!-- /.container -->
+
+
+
+
+<script src="{% static 'js/jquery-2.1.1.min.js' %}"></script>
+<script src="{% static 'js/moment-with-locales.js' %}"></script>
+<script src="{% static 'bootstrap-3.3.5-dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'js/bootstrap-datetimepicker.js' %}"></script> 
+<script type="text/javascript">
+    function gen_queue_view_table_content(result_obj, filter_str) {
+        $('#search-input').val(filter_str);
+        var record_html = $('#queue-view-table .record:first').get(0).outerHTML;
+        var target_queue_name = "";
+        var target_app_type = "";
+        var total_apps = 0;
+        for( var queue_name in result_obj)
+        {
+            for( var app_type in result_obj[queue_name]['apps'] )
+            {
+                for( var app_state in result_obj[queue_name]['apps'][app_type]['final_status'] )
+                {
+                    var project = result_obj[queue_name]['group'];
+                    var app_amount = result_obj[queue_name]['apps'][app_type]['final_status'][app_state]['applications'];
+                    var memory = result_obj[queue_name]['apps'][app_type]['final_status'][app_state]['memorySeconds'];
+                    var vcore = result_obj[queue_name]['apps'][app_type]['final_status'][app_state]['vcoreSeconds'];
+                    var execution_time = result_obj[queue_name]['apps'][app_type]['final_status'][app_state]['duration'];
+                    if( filter_str == "" ||
+                        queue_name.search(filter_str) >= 0 || project.search(filter_str) >= 0 ||
+                        app_type.search(filter_str) >= 0 || app_state.search(filter_str) >= 0 || execution_time.search(filter_str) >= 0 ||
+                        app_amount.toString().search(filter_str) >= 0 || memory.toString().search(filter_str) >= 0 || vcore.toString().search(filter_str) >=0 )
+                    {
+                        var prev_record = $('#queue-view-table .record:last');
+                        var new_record = $('#queue-view-table .record:last').after(record_html).next().removeClass('hidden');
+                        total_apps += app_amount;
+
+                        if( queue_name != target_queue_name )
+                        {
+                            target_queue_name = queue_name;
+                            target_app_type = app_type;
+                            $(new_record).find('.project').text(project);
+                            $(new_record).find('.queue-name').text(queue_name);
+                            $(new_record).find('.app-type').text(app_type);
+                            $(new_record).find('.app-state').text(app_state);
+                        }
+                        else
+                        {
+                            if( app_type != target_app_type )
+                            {
+                                target_app_type = app_type;
+                                $(new_record).find('.app-type').text(app_type);
+                                $(new_record).find('.app-state').text(app_state);
+                            }
+                            else
+                            {
+                                if( $(prev_record).find('.app-state').text() != app_state )
+                                    $(new_record).find('.app-state').text(app_state);
+                            }
+                        }
+                        $(new_record).find('.app-amount').text(app_amount);
+                        $(new_record).find('.memory').text(memory);
+                        $(new_record).find('.vcore').text(vcore);
+                        $(new_record).find('.execution-time').text(execution_time);
+                    } // end filtering
+                } // end for
+            } // end for
+        } // end for
+        $('#total-apps-text').text(total_apps);
+    } // end function
+
+    function gen_project_view_table_content(result_obj, filter_str) {
+        $('#search-input').val(filter_str);
+        var record_html = $('#project-view-table .record:first').get(0).outerHTML;
+        var target_project = "";
+        var total_apps = 0;
+        for( var project in result_obj)
+        {
+            for( var app_state in result_obj[project]['apps'] )
+            {
+                var name = result_obj[project]['name'];
+                var queues = result_obj[project]['queues'].join(' ');
+                var app_amount = result_obj[project]['apps'][app_state]['applications'];
+                var memory = result_obj[project]['apps'][app_state]['memorySeconds'];
+                var vcore = result_obj[project]['apps'][app_state]['vcoreSeconds'];
+                var execution_time = result_obj[project]['apps'][app_state]['duration'];
+                if( filter_str == "" ||
+                    project.search(filter_str) >= 0 || name.search(filter_str) >= 0 || queues.search(filter_str) >= 0 ||
+                    app_state.search(filter_str) >= 0 || execution_time.search(filter_str) >= 0 ||
+                    app_amount.toString().search(filter_str) >= 0 || memory.toString().search(filter_str) >= 0 || vcore.toString().search(filter_str) >=0 )
+                {
+                    var prev_record = $('#project-view-table .record:last');
+                    var new_record = $('#project-view-table .record:last').after(record_html).next().removeClass('hidden');
+                    total_apps += app_amount;
+
+                    if( project != target_project )
+                    {
+                        target_project = project;
+                        $(new_record).find('.project').text(project);
+                        $(new_record).find('.name').text(name);
+                        $(new_record).find('.queues').text(queues);
+                        $(new_record).find('.app-state').text(app_state);
+                    }
+                    else
+                    {
+                        if( $(prev_record).find('.app-state').text() != app_state )
+                            $(new_record).find('.app-state').text(app_state);
+                    }
+                    $(new_record).find('.app-amount').text(app_amount);
+                    $(new_record).find('.memory').text(memory);
+                    $(new_record).find('.vcore').text(vcore);
+                    $(new_record).find('.execution-time').text(execution_time);
+                } // end filtering
+            } // end for
+        } // end for
+        $('#total-apps-text').text(total_apps);
+    } // end function
+
+    // refs : http://eonasdan.github.io/bootstrap-datetimepicker/
+    $(function () {
+        $('#from-time').datetimepicker({
+            locale: 'en-gb', 
+        });
+        $('#end-time').datetimepicker({
+            useCurrent: false, //Important! See issue #1075
+            locale: 'en-gb',
+        });
+        $("#from-time").on("dp.change", function (e) {
+            $('#end-time').data("DateTimePicker").minDate(e.date);
+        });
+        $("#end-time").on("dp.change", function (e) {
+            $('#from-time').data("DateTimePicker").maxDate(e.date);
+        });
+    });
+    
+    $(document).ready(function() {
+        var QUEUE_VIEW_RESULT = {};
+        var PROJECT_VIEW_RESULT = {};
+        var queue_view_table_init_html = $('#queue-view-table').html();
+        var project_view_table_init_html = $('#project-view-table').html();
+        var view = $('.table-view-radio:checked').val();
+        $('#' + view + '-' + 'view-table').removeClass('hidden');
+
+        $('#query-btn').click(function() {
+            if( ! $('#from-time input').val() || ! $('#end-time input').val()  )
+            {
+                alert("Please select time interval of query");
+                return false;
+            }
+
+            // result init
+            $('#loader-img').removeClass('hidden');
+            $('#queue-view-table').html(queue_view_table_init_html);
+            $('#project-view-table').html(project_view_table_init_html);
+            $('#result-div').addClass('hidden');
+            $('#no-result-div').addClass('hidden');
+            // get request data 
+            var request_data = {};
+            if( $('#queue-name-input').val() )
+                request_data['queue_name'] = $('#queue-name-input').val();
+            if( $('#app-type-input').val() )
+                request_data['app_type'] = $('#app-type-input').val();
+            request_data['app_state'] = "";
+            request_data['app_state'] = $('.app-state-checkbox:checked').map( function() { return this.value; }).get().join(',');
+            request_data['from_time'] = $('#from-time input').val();
+            request_data['end_time'] = $('#end-time input').val();
+            var request = $.ajax({
+                url: "{% url 'api_data_collection' %}",
+                method: "GET",
+                data: request_data,
+            });
+ 
+            request.done(function( msg ) {
+                $('#loader-img').addClass('hidden');
+                var reponse_data = JSON.parse( msg );
+                if( reponse_data['success'] )
+                {
+                    if( JSON.stringify(reponse_data['message']['queue_view']) != "{}" || JSON.stringify(reponse_data['message']['group_view']) != "{}" )
+                    {
+                        $('#result-div').removeClass('hidden');
+                        if( JSON.stringify(reponse_data['message']['queue_view']) != "{}" )
+                        {
+                            QUEUE_VIEW_RESULT = reponse_data['message']['queue_view'];
+                            gen_queue_view_table_content(QUEUE_VIEW_RESULT, "");
+                        }
+                        if( JSON.stringify(reponse_data['message']['group_view']) != "{}" )
+                        {
+                            PROJECT_VIEW_RESULT = reponse_data['message']['group_view'];
+                            gen_project_view_table_content(PROJECT_VIEW_RESULT, "");
+                        }
+                    }
+                    else
+                         $('#no-result-div').removeClass('hidden');
+                }
+                else
+                {
+                    $('#no-result-div').removeClass('hidden');
+                    alert("Error: "+reponse_data['message'])
+                }
+            });
+ 
+            request.fail(function( jqXHR, textStatus ) {
+                $('#loader-img').addClass('hidden');
+                alert( "Request failed: " + textStatus );
+            }); 
+        });
+        // result search
+        $('#search-input').keyup( function() {
+            var filter_str = $('#search-input').val();
+            $('#queue-view-table').html(queue_view_table_init_html);
+            $('#project-view-table').html(project_view_table_init_html);
+            gen_queue_view_table_content(QUEUE_VIEW_RESULT, filter_str);
+            gen_project_view_table_content(PROJECT_VIEW_RESULT, filter_str);
+        });
+        // select table view
+        $('.table-view-radio').change( function() {
+            $('.table-view-radio').each( function() {
+                if( $(this).prop('checked') )
+                    $('#' + $(this).val()+ '-view-table').removeClass('hidden');
+                else
+                    $('#' + $(this).val()+ '-view-table').addClass('hidden');
+            });
+        });
+    });
+</script>
+</body>
+</html>
