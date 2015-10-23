@@ -7,6 +7,7 @@ from cm_api.api_client import ApiResource
 import json
 import ConfigParser
 import os
+import re
 
 
 def index(request):
@@ -103,24 +104,22 @@ def api_data_collection(request):
             queue_view_final_result = statistics_response['message']
             group_view_final_result = {}
             #
-            # load project define json file. get the project name of group
-            with open(os.path.join(settings.BASE_DIR, "project_define.json"), 'r') as f:
-                project_define = json.load(f)
             #
             # add group information to queue view result and accumulate the result by group
             for queue, queue_info in queue_view_final_result.items():
                 #
-                # queue naming : root.SYSTEM.<account> , root.PERSONAL.<account>
                 queue_view_final_result[queue]['group'] = ''
-                if len( queue.split('.') ) == 3 and queue.split('.')[0] == "root" and ( queue.split('.')[1] == "SYSTEM" or queue.split('.')[1] == "PERSONAL" ):
-                    queue_view_final_result[queue]['account'] = queue.split('.')[-1]
-                    group = query_group_of_user(ldap_connection, queue_view_final_result[queue]['account'])
+                # queue naming : root.SYSTEM.<account> , root.PERSONAL.<account>
+                m = re.match(r"(?P<root>\w+)\.(?P<second>\w+)\.(?P<third>\w+)", queue)
+                if m and m.group('root') == 'root' and ( m.group('second') == 'SYSTEM' or m.group('second') == 'PERSONAL' ):
+                    queue_view_final_result[queue]['account'] = m.group('third')
+                    group_query_result = query_group_of_user(ldap_connection, queue_view_final_result[queue]['account'])
+                    group = group_query_result['group']
+                    project_name = group_query_result['name']
                     queue_view_final_result[queue]['group'] = group
                     if not group_view_final_result.has_key(group):
-                        group_view_final_result[group] = { 'apps':{}, 'queues':[], 'name':'' }
+                        group_view_final_result[group] = { 'apps':{}, 'queues':[], 'name':project_name }
                     group_view_final_result[group]['queues'].append(queue)
-                    if project_define.has_key(group):
-                        group_view_final_result[group]['name'] = project_define[group]
                     #
                     for app_type, app_info in queue_info['apps'].items():
                         for app_state, data in app_info['final_status'].items():

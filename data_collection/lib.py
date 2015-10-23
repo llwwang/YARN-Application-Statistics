@@ -156,18 +156,20 @@ def query_group_of_user(ldap_connection, user_account):
         """
     user_base_dn = "ou=People,dc=cht,dc=local"
     group_base_dn = "ou=Group,dc=cht,dc=local"
-    group_name = ""
-    user_search_result = ldap_connection.search_s(user_base_dn, ldap.SCOPE_SUBTREE, "uid={0}".format(user_account), ['sn','gidNumber'])
+    response = { 'name':'', 'group':'' }
+    user_search_result = ldap_connection.search_s(user_base_dn, ldap.SCOPE_SUBTREE, "uid={0}".format(user_account), ['businessCategory','gidNumber'])
     if len(user_search_result) > 0:
         (schema, info) = user_search_result[0]
         if info.has_key('gidNumber') and len( info['gidNumber'] ) > 0:
             gid = info['gidNumber'][0]
             group_search_result = ldap_connection.search_s(group_base_dn, ldap.SCOPE_SUBTREE, "gidNumber={0}".format(str(gid)), ['cn'])
             if len(group_search_result) > 0:
-                (schema, info) = group_search_result[0]
-                if info.has_key('cn') and len( info['cn'] ) > 0:
-                    group_name = info['cn'][0]
-    return group_name
+                (schema_g, info_g) = group_search_result[0]
+                if info_g.has_key('cn') and len( info_g['cn'] ) > 0:
+                    response['group'] = info_g['cn'][0]
+        if info.has_key('businessCategory') and len( info['businessCategory'] ) > 0:
+            response['name'] = info['businessCategory'][0]
+    return response
 
 
 def transform_queue_view_response(response):
